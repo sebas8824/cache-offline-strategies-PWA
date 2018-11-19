@@ -1,31 +1,16 @@
-self.addEventListener('fetch', event => {
-    
-    const offlineResponse = new Response(`
-    <!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="X-UA-Compatible" content="ie=edge">
-            <title>Mi PWA</title>
-        </head>                
-        <body class="container p-3">
-            <h1>Modo offline</h1>
-        </body>
-    </html>
-    `, {
-        headers: {
-            'Content-Type': 'text/html'
-        }
-    });
-    
-    // Requiere estrategia del cache para traer el archivo creado.s
-    //const offlineResponse = fetch('pages/offline.html');
+self.addEventListener('install', e => {
+    // Adicionar el app shell (Lo que se necesita para que la pagina cargue bien.)
+    const cp = caches.open('cache-1')
+        .then(cache => {
+            return cache.addAll([
+                '/index.html', 
+                '/css/style.css', 
+                '/img/main.jpg', 
+                'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css',
+                '/js/app.js'
+            ]);
+        });
 
-    const respuesta = fetch(event.request)
-        .catch(() => offlineResponse);
-
-    event.respondWith(respuesta);
-})
-
-
+    // Esperar hasta que cp termine.
+    e.waitUntil(cp);
+});
