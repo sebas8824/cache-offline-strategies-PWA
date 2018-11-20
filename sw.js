@@ -4,6 +4,7 @@ const CACHE_STATIC_NAME = 'static-v2';
 const CACHE_DYNAMIC_NAME = 'dynamic-v1';
 /* Librerias externas */
 const CACHE_IMMUTABLE_NAME = 'immutable-v1';
+const CACHE_DYNAMIC_LIMIT = 50;
 
 function cleanCache(cacheName, nItems) {
     caches.open(cacheName)
@@ -43,7 +44,7 @@ self.addEventListener('fetch', e => {
     /* 1. Cache only; Se usa cuando queremos que toda la app sea servida desde el cache.
     e.respondWith(caches.match(e.request)); */
 
-    /* 2. Cache with network fallback: Intenta primero cache, pero si no se encuentra, va a internet */
+    /* 2. Cache with network fallback: Intenta primero cache, pero si no se encuentra, va a internet 
     const rc = caches.match(e.request)
         .then(response => {
             if(response) return response;
@@ -58,12 +59,30 @@ self.addEventListener('fetch', e => {
                     caches.open(CACHE_DYNAMIC_NAME)
                         .then(cache => {
                             cache.put(e.request, newResponse);
-                            cleanCache(CACHE_DYNAMIC_NAME, 5);
+                            cleanCache(CACHE_DYNAMIC_NAME, CACHE_DYNAMIC_LIMIT);
                         })
                     return newResponse.clone();
                 });
         });
 
 
-    e.respondWith(rc);
+    e.respondWith(rc);*/
+
+    /* 3. Network with cache fallback */
+    const networkResponse = fetch(e.request)
+        .then(resp => {
+            if(!resp) return caches.match(e.request);
+            console.log('Fetch', resp);
+            caches.open(CACHE_DYNAMIC_NAME)
+                .then(cache => {
+                    cache.put(e.request, resp);
+                    cleanCache(CACHE_DYNAMIC_NAME, CACHE_DYNAMIC_LIMIT);
+                });
+
+            return resp.clone();
+        })
+        .catch(err => {
+            return caches.match(e.request);
+        });
+    e.respondWith(networkResponse);
 });
