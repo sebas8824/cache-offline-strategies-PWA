@@ -1,9 +1,22 @@
 /* Va todo lo del APP SHELL */
-const CACHE_STATIC_NAME = 'static-v1';
+const CACHE_STATIC_NAME = 'static-v2';
 /* Cache generado por procesos como el de internet fallback */
 const CACHE_DYNAMIC_NAME = 'dynamic-v1';
 /* Librerias externas */
 const CACHE_IMMUTABLE_NAME = 'immutable-v1';
+
+function cleanCache(cacheName, nItems) {
+    caches.open(cacheName)
+        .then(cache => {
+            cache.keys()
+                .then(keys => {
+                    if(keys.length > nItems) {
+                        cache.delete(keys[0])
+                            .then(cleanCache(cacheName, nItems))
+                    }
+                });
+        });
+}
 
 self.addEventListener('install', e => {
     const sc = caches.open(CACHE_STATIC_NAME)
@@ -45,6 +58,7 @@ self.addEventListener('fetch', e => {
                     caches.open(CACHE_DYNAMIC_NAME)
                         .then(cache => {
                             cache.put(e.request, newResponse);
+                            cleanCache(CACHE_DYNAMIC_NAME, 5);
                         })
                     return newResponse.clone();
                 });
