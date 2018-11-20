@@ -1,22 +1,28 @@
-const CACHE_NAME = 'cache-1'
+/* Va todo lo del APP SHELL */
+const CACHE_STATIC_NAME = 'static-v1';
+/* Cache generado por procesos como el de internet fallback */
+const CACHE_DYNAMIC_NAME = 'dynamic-v1';
+/* Librerias externas */
+const CACHE_IMMUTABLE_NAME = 'immutable-v1';
 
 self.addEventListener('install', e => {
-    // Adicionar el app shell (Lo que se necesita para que la pagina cargue bien.)
-    const cp = caches.open(CACHE_NAME)
+    const sc = caches.open(CACHE_STATIC_NAME)
         .then(cache => {
             return cache.addAll([
                 /*Se usa / para que no falle al llamar localhost:8080/*/
                 '/',
                 '/index.html', 
                 '/css/style.css', 
-                '/img/main.jpg', 
-                'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css',
+                '/img/main.jpg',                 
                 '/js/app.js'
             ]);
         });
 
+    const dc = caches.open(CACHE_IMMUTABLE_NAME)
+        .then(cache => cache.add('https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css'));
+
     // Esperar hasta que cp termine.
-    e.waitUntil(cp);
+    e.waitUntil(Promise.all([sc, dc]));    
 });
 
 self.addEventListener('fetch', e => {
@@ -36,7 +42,7 @@ self.addEventListener('fetch', e => {
 
                     // Se incluye en el cache, para que a pesar que no exista el recurso y lo baje del sw, lo tenga ya incluido y no haga
                     // la misma operacion siempre de ahi en adelante.
-                    caches.open(CACHE_NAME)
+                    caches.open(CACHE_DYNAMIC_NAME)
                         .then(cache => {
                             cache.put(e.request, newResponse);
                         })
