@@ -3,6 +3,8 @@ self.addEventListener('install', e => {
     const cp = caches.open('cache-1')
         .then(cache => {
             return cache.addAll([
+                /*Se usa / para que no falle al llamar localhost:8080/*/
+                '/',
                 '/index.html', 
                 '/css/style.css', 
                 '/img/main.jpg', 
@@ -13,4 +15,10 @@ self.addEventListener('install', e => {
 
     // Esperar hasta que cp termine.
     e.waitUntil(cp);
+});
+
+self.addEventListener('fetch', e => {
+    
+    // 1. Cache only; Se usa cuando queremos que toda la app sea servida desde el cache.
+    e.respondWith(caches.match(e.request));
 });
