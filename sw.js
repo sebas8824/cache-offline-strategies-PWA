@@ -69,7 +69,7 @@ self.addEventListener('fetch', e => {
     e.respondWith(rc);*/
 
     /* 3. Network with cache fallback */
-    const networkResponse = fetch(e.request)
+    /* const networkResponse = fetch(e.request)
         .then(resp => {
             if(!resp) return caches.match(e.request);
             console.log('Fetch', resp);
@@ -84,5 +84,23 @@ self.addEventListener('fetch', e => {
         .catch(err => {
             return caches.match(e.request);
         });
-    e.respondWith(networkResponse);
+    e.respondWith(networkResponse);*/
+
+    /* 4. Cache with network update */
+    // Util cuando el rendimiento es crítico.
+    // Actualizaciones siempre estaran un paso atrás.
+    if (e.request.url.includes('bootstrap')) {
+        return e.respondWith(caches.match( e.request ));
+    }
+
+    const resp = caches.open(CACHE_STATIC_NAME)
+        .then(cache => {
+            // Actualiza el nuevo cache en el static, pero sirve lo que hay actualmente.
+            fetch(e.request).then(newResponse => cache.put(e.request, newResponse));
+            return cache.match(e.request);
+        });
+
+
+    e.respondWith(resp);
+
 });
