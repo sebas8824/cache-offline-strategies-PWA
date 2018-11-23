@@ -27,7 +27,8 @@ self.addEventListener('install', e => {
                 '/',
                 '/index.html', 
                 '/css/style.css', 
-                '/img/main.jpg',                 
+                '/img/main.jpg',
+                '/img/no-img.jpg',                 
                 '/js/app.js'
             ]);
         });
@@ -89,7 +90,7 @@ self.addEventListener('fetch', e => {
     /* 4. Cache with network update */
     // Util cuando el rendimiento es crítico.
     // Actualizaciones siempre estaran un paso atrás.
-    if (e.request.url.includes('bootstrap')) {
+    /*if (e.request.url.includes('bootstrap')) {
         return e.respondWith(caches.match( e.request ));
     }
 
@@ -100,6 +101,36 @@ self.addEventListener('fetch', e => {
             return cache.match(e.request);
         });
 
+
+    e.respondWith(resp);*/
+
+    /* 5. Cache & network race */
+    const resp = new Promise( (resolve, reject) => {
+        let rejected = false;
+        const failedOnce = () => {
+            // No existe ni en cache, ni en fetch valido.
+            if(rejected) {
+                // Coloca una imagen por defecto
+                if(/\.(png|jpg)$/i.test(e.request.url)) {    
+                    resolve(caches.match('/img/no-img.jpg'));
+                } else {
+                    reject('No se encontro respuesta');
+                }
+            } else {
+                rejected = true;
+            }
+        };
+
+
+        fetch(e.request).then(res => {
+            res.ok ? resolve(res) : failedOnce();
+        }).catch(failedOnce);
+
+        caches.match(e.request).then(res => {
+            res ? resolve(res): failedOnce();
+        }).catch(failedOnce);
+    });
+    
 
     e.respondWith(resp);
 
